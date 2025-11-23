@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPK SAW & TOPSIS</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            position: relative;
+        }
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: 
+                linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%),
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(59, 130, 246, 0.02) 10px,
+                    rgba(59, 130, 246, 0.02) 20px
+                );
+        }
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+        .select2-container .select2-selection--multiple {
+            min-height: 42px !important;
+            padding: 4px 8px !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 0.5rem !important;
+            background-color: white !important;
+        }
+        .select2-container .select2-selection--multiple:focus {
+            border-color: #3b82f6 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+        .select2-container .select2-selection__choice {
+            background-color: #3b82f6 !important;
+            border: none !important;
+            color: white !important;
+            padding: 4px 8px 4px 12px !important;
+            border-radius: 0.375rem !important;
+            margin: 2px 4px 2px 0 !important;
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+            text-transform: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        .select2-container .select2-selection__choice__remove {
+            color: white !important;
+            margin-right: 6px !important;
+            font-weight: bold !important;
+            font-size: 1rem !important;
+            line-height: 1 !important;
+            padding: 0 !important;
+            border: none !important;
+            cursor: pointer !important;
+        }
+        .select2-container .select2-selection__choice__remove:hover {
+            color: #fef2f2 !important;
+            background-color: transparent !important;
+        }
+        .select2-container--default .select2-search--inline .select2-search__field {
+            margin-top: 4px !important;
+            padding: 2px 4px !important;
+        }
+        .select2-dropdown {
+            border: 1px solid #d1d5db !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+        .select2-results__option {
+            padding: 8px 12px !important;
+        }
+        .select2-results__option--highlighted {
+            background-color: #3b82f6 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <div class="bg-pattern"></div>
+    <div class="content-wrapper">
+
+{% if error_msg %}
+<div id="alertBox" class="fixed top-4 right-4 z-50 max-w-md">
+    <div class="p-5 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg shadow-lg">
+
+        <div class="font-semibold mb-2 text-red-900">Error</div>
+        <div class="text-sm mb-4">{{ error_msg | safe }}</div>
+
+        {% if show_template %}
+        <div>
+            <a href="/download_template"
+               class="inline-block px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors text-sm">
+                Download Template Excel SPK
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endif %}
+
+
+
+
+<div class="max-w-5xl mx-auto p-6 md:p-8">
+
+    <!-- Back -->
+    <a href="{{ url_for('home') }}"
+       class="inline-flex items-center gap-2 mb-8 px-4 py-2.5 bg-white border border-gray-200
+              text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium">
+        <span class="text-lg">←</span> Home
+    </a>
+
+    <div class="mb-8">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Upload File Excel</h2>
+        <p class="text-gray-600">Proses penilaian menggunakan metode SAW & TOPSIS</p>
+    </div>
+
+    <a href="/download_template"
+       class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-6 text-sm font-medium shadow-sm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Download Template Excel
+    </a>
+
+    <!-- UPLOAD -->
+<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-6">
+    <button onclick="toggleAccordion('acc_upload')" class="w-full flex justify-between items-center text-xl font-semibold text-gray-900 hover:text-blue-600 py-2 transition-colors">
+        Upload File Excel
+        <span id="icon_acc_upload" class="text-gray-400 text-lg">{% if uploaded_filename or file_uploaded %}▼{% else %}▼{% endif %}</span>
+    </button>
+
+    <div id="acc_upload" class="{% if uploaded_filename %}hidden{% elif file_uploaded %}hidden{% endif %} {% if not uploaded_filename and not file_uploaded %}mt-6{% endif %}">
+        <form method="POST" enctype="multipart/form-data" class="space-y-5">
+            <input type="hidden" name="step" value="upload">
+
+            <p class="text-sm text-gray-600 mb-6">Pilih atau tarik file Excel yang akan diproses</p>
+
+            {% if uploaded_filename %}
+            <div class="px-4 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm">
+                <span class="font-medium">File berhasil diupload:</span> {{ uploaded_filename }}
+            </div>
+            {% endif %}
+
+            <div id="dropzone"
+                 class="w-full border-2 border-dashed border-gray-300 rounded-lg py-12
+                        flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors">
+
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-gray-400" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+
+                <span id="fileName" class="text-sm font-medium">
+                    {% if uploaded_filename %}
+                        {{ uploaded_filename }}
+                    {% else %}
+                        Tarik file ke sini atau klik untuk memilih
+                    {% endif %}
+                </span>
+            </div>
+
+            <input type="file" name="file" id="fileInput" class="hidden" required>
+
+            <button type="submit"
+                    class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm hover:shadow transition-all">
+                Proses File Excel
+            </button>
+
+        </form>
+    </div>
+</div>
+
+    <!-- ================= PREVIEW BOBOT YANG DIGUNAKAN ================= -->
+    {% if tableshow %}
+    <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-semibold mb-2 text-gray-900">Bobot & Jenis Kriteria yang Digunakan</h3>
+        <p class="text-sm text-gray-600 mb-4">Berikut adalah bobot dan jenis kriteria yang digunakan untuk perhitungan saat ini</p>
+
+        {% if kriteria_info %}
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Kriteria</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Bobot</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Jenis</th>
+            </tr>
+            </thead>
+            <tbody class="bg-white">
+            {% for k in kriteria_info %}
+            <tr class="border-t border-gray-200">
+                <td class="px-4 py-3 text-gray-800 font-medium">{{ k.nama }}</td>
+                <td class="px-4 py-3 text-gray-800">{{ "%.3f"|format(k.bobot|float) }}</td>
+                <td class="px-4 py-3">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium {% if k.jenis|lower == 'benefit' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ k.jenis }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="px-4 py-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+            Informasi bobot tidak tersedia. Pastikan backend mengirim data kriteria_info.
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+
+    <!-- ================= FORM BOBOT & KRITERIA ================= -->
+{% if file_uploaded and not tableshow %}
+<div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-6">
+    <h3 class="text-xl font-semibold mb-2 text-gray-900">Pengaturan Bobot & Jenis Kriteria</h3>
+    <p class="text-sm text-gray-600 mb-6">Tentukan bobot dan jenis kriteria untuk perhitungan</p>
+
+    <form method="POST" class="space-y-4">
+        <input type="hidden" name="step" value="weights">
+
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Kriteria</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Bobot (0 - 1)</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Jenis</th>
+            </tr>
+            </thead>
+
+            <tbody class="bg-white">
+            <tr class="border-t border-gray-200">
+                <td class="px-4 py-3 text-gray-800 font-medium">Jumlah Tanggungan</td>
+                <td>
+                    <input type="text" step="0.001" min="0" max="1"
+                           name="w_jt"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent weight-input"
+                           required>
+                </td>
+                <td>
+                    <select name="t_jt" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="benefit">Benefit</option>
+                        <option value="cost">Cost</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr class="border-t border-gray-200">
+                <td class="px-4 py-3 text-gray-800 font-medium">Usia</td>
+                <td>
+                    <input type="text" step="0.001" min="0" max="1"
+                           name="w_usia"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent weight-input"
+                           required>
+                </td>
+                <td>
+                    <select name="t_usia" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="benefit">Benefit</option>
+                        <option value="cost">Cost</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr class="border-t border-gray-200">
+                <td class="px-4 py-3 text-gray-800 font-medium">Pekerjaan</td>
+                <td>
+                    <input type="text" step="0.001" min="0" max="1"
+                           name="w_pekerjaan"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent weight-input"
+                           required>
+                </td>
+                <td>
+                    <select name="t_pekerjaan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="cost">Cost</option>
+                        <option value="benefit">Benefit</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr class="border-t border-gray-200">
+                <td class="px-4 py-3 text-gray-800 font-medium">Status</td>
+                <td>
+                    <input type="text" step="0.001" min="0" max="1"
+                           name="w_status"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent weight-input"
+                           required>
+                </td>
+                <td>
+                    <select name="t_status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="benefit">Benefit</option>
+                        <option value="cost">Cost</option>
+                    </select>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- INFO BOBOT -->
+        <div id="weight_info" class="mt-4 px-4 py-3 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
+            Total bobot: <span id="total_bobot" class="font-semibold text-gray-900">0.000</span> —
+            Sisa: <span id="sisa_bobot" class="font-semibold text-gray-900">1.000</span>
+        </div>
+
+        <button id="btn_hitung" type="submit"
+                class="mt-4 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+            Hitung SAW & TOPSIS
+        </button>
+
+
+    </form>
+</div>
+{% endif %}
+
+    <!-- ================= HASIL PERHITUNGAN ================= -->
+    {% if tableshow %}
+
+    <!-- TOPSIS -->
+    <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-6">
+        <button onclick="toggleAccordion('acc_topsis')" class="w-full flex justify-between items-center text-xl font-semibold text-gray-900 hover:text-blue-600 py-2 transition-colors">
+            Hasil Perhitungan TOPSIS
+            <span id="icon_acc_topsis" class="text-gray-400 text-lg">▼</span>
+        </button>
+
+        <div id="acc_topsis" class="hidden mt-6">
+
+            <div class="border border-gray-200 rounded-lg p-5 bg-gray-50">
+                <h4 class="font-semibold mb-4 text-gray-900">Filter Data TOPSIS</h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">RW</label>
+                        <select id="filter_rw_topsis" class="select2 w-full" multiple></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">RT</label>
+                        <select id="filter_rt_topsis" class="select2 w-full" multiple></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dusun</label>
+                        <select id="filter_dusun_topsis" class="select2 w-full" multiple></select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                    <form action="/download_topsis_filter" method="get">
+                        <input type="hidden" name="rw" id="val_rw_topsis">
+                        <input type="hidden" name="rt" id="val_rt_topsis">
+                        <input type="hidden" name="dusun" id="val_dusun_topsis">
+                        <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+                            Download TOPSIS (Filter)
+                        </button>
+                    </form>
+
+                    <a href="/download_topsis_all" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        Download Semua TOPSIS
+                    </a>
+                </div>
+
+            </div>
+
+           <div class="overflow-x-auto w-full">
+            <table id="tabel_topsis" class="display stripe hover w-full mt-4 text-sm">
+                <thead class="bg-gray-100">
+                <tr>
+                    <th>Nama</th><th>NIK</th><th>RW</th><th>RT</th><th>Dusun</th><th>Nilai TOPSIS</th><th>Ranking</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row.Nama }}</td>
+                    <td>{{ row.NIK }}</td>
+                    <td>{{ row.RW }}</td>
+                    <td>{{ row.RT }}</td>
+                    <td>{{ row.Dusun }}</td>
+                    <td>{{ "%.3f"|format(row.Nilai_TOPSIS|float) }}</td>
+                    <td>{{ row.Ranking }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+           </div>
+        </div>
+    </div>
+
+    <!-- SAW -->
+    <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-6 mb-6">
+        <button onclick="toggleAccordion('acc_saw')" class="w-full flex justify-between items-center text-xl font-semibold text-gray-900 hover:text-blue-600 py-2 transition-colors">
+            Hasil Perhitungan SAW
+            <span id="icon_acc_saw" class="text-gray-400 text-lg">▼</span>
+        </button>
+
+        <div id="acc_saw" class="hidden mt-6">
+
+            <div class="border border-gray-200 rounded-lg p-5 bg-gray-50">
+                <h4 class="font-semibold mb-4 text-gray-900">Filter Data SAW</h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">RW</label>
+                        <select id="filter_rw_saw" class="select2 w-full" multiple></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">RT</label>
+                        <select id="filter_rt_saw" class="select2 w-full" multiple></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dusun</label>
+                        <select id="filter_dusun_saw" class="select2 w-full" multiple></select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                    <form action="/download_saw_filter" method="get">
+                        <input type="hidden" name="rw" id="val_rw_saw">
+                        <input type="hidden" name="rt" id="val_rt_saw">
+                        <input type="hidden" name="dusun" id="val_dusun_saw">
+                        <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+                            Download SAW (Filter)
+                        </button>
+                    </form>
+
+                    <a href="/download_saw_all" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        Download Semua SAW
+                    </a>
+                </div>
+
+            </div>
+
+        <div class="overflow-x-auto w-full">
+            <table id="tabel_saw" class="display stripe hover w-full mt-4 text-sm">
+                <thead class="bg-gray-100">
+                <tr>
+                    <th>Nama</th><th>NIK</th><th>RW</th><th>RT</th><th>Dusun</th><th>Nilai SAW</th><th>Ranking</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row.Nama }}</td>
+                    <td>{{ row.NIK }}</td>
+                    <td>{{ row.RW }}</td>
+                    <td>{{ row.RT }}</td>
+                    <td>{{ row.Dusun }}</td>
+                    <td>{{ "%.3f"|format(row.Nilai_SAW|float) }}</td>
+                    <td>{{ row.Ranking }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ======================================================= -->
+<!-- ======================= SCRIPT ========================= -->
+<!-- ======================================================= -->
+
+<script>
+function toggleAccordion(id) {
+    const content = document.getElementById(id);
+    const icon = document.getElementById("icon_" + id);
+    content.classList.toggle("hidden");
+    icon.textContent = content.classList.contains("hidden") ? "▼" : "▲";
+}
+</script>
+
+<script>
+$(document).ready(function() {
+    $(".select2").select2({ width: "100%", allowClear: true });
+});
+</script>
+
+{% if tableshow %}
+<script>
+$(document).ready(function() {
+
+    let tableT = $("#tabel_topsis").DataTable({
+        pageLength: 10,
+        order: [[6, "asc"]]   // kolom Ranking urut naik
+    });
+
+    let tableS = $("#tabel_saw").DataTable({
+        pageLength: 10,
+        order: [[6, "asc"]]   // kolom Ranking urut naik
+    });
+
+    function fillOptions(columnIndex, selector){
+        tableT.column(columnIndex).data().unique().sort().each(function(v){
+            $(selector).append(new Option(v, v));
+        });
+    }
+
+    fillOptions(2, "#filter_rw_topsis, #filter_rw_saw");
+    fillOptions(3, "#filter_rt_topsis, #filter_rt_saw");
+    fillOptions(4, "#filter_dusun_topsis, #filter_dusun_saw");
+
+    // FILTER
+    function applyFilter(selectID, table, colIndex, hiddenID){
+        $(selectID).on("change", function() {
+            let v = $(this).val() || [];
+            table.column(colIndex).search(v.join("|"), true, false).draw();
+            $(hiddenID).val(v.join(","));
+        });
+    }
+
+    applyFilter("#filter_rw_topsis", tableT, 2, "#val_rw_topsis");
+    applyFilter("#filter_rt_topsis", tableT, 3, "#val_rt_topsis");
+    applyFilter("#filter_dusun_topsis", tableT, 4, "#val_dusun_topsis");
+
+    applyFilter("#filter_rw_saw", tableS, 2, "#val_rw_saw");
+    applyFilter("#filter_rt_saw", tableS, 3, "#val_rt_saw");
+    applyFilter("#filter_dusun_saw", tableS, 4, "#val_dusun_saw");
+
+});
+</script>
+{% endif %}
+
+<!-- DROPZONE -->
+<script>
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const fileName = document.getElementById("fileName");
+
+if (dropzone) {
+    dropzone.addEventListener("click", () => fileInput.click());
+}
+
+if (fileInput) {
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) fileName.textContent = fileInput.files[0].name;
+    });
+}
+
+if (dropzone) {
+    ["dragenter","dragover","dragleave","drop"].forEach(ev => {
+        dropzone.addEventListener(ev, e => e.preventDefault());
+    });
+
+    dropzone.addEventListener("drop", (e) => {
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            fileName.textContent = e.dataTransfer.files[0].name;
+        }
+    });
+}
+
+// Tutup accordion upload setelah form di-submit
+const uploadForm = document.querySelector('form[method="POST"][enctype="multipart/form-data"]');
+if (uploadForm) {
+    uploadForm.addEventListener("submit", function() {
+        const accUpload = document.getElementById("acc_upload");
+        const iconAccUpload = document.getElementById("icon_acc_upload");
+        if (accUpload && iconAccUpload) {
+            accUpload.classList.add("hidden");
+            iconAccUpload.textContent = "▼";
+        }
+    });
+}
+
+// Inisialisasi state accordion upload saat halaman dimuat
+document.addEventListener("DOMContentLoaded", function() {
+    const accUpload = document.getElementById("acc_upload");
+    const iconAccUpload = document.getElementById("icon_acc_upload");
+    if (accUpload && iconAccUpload) {
+        // Jika file sudah diupload (ada pesan sukses upload), pastikan accordion tertutup
+        const hasUploadedFile = document.querySelector('div[id="acc_upload"] .bg-blue-50') !== null;
+        
+        if (hasUploadedFile || accUpload.classList.contains("hidden")) {
+            accUpload.classList.add("hidden");
+            iconAccUpload.textContent = "▼";
+        } else {
+            // Update icon sesuai state
+            iconAccUpload.textContent = accUpload.classList.contains("hidden") ? "▼" : "▲";
+        }
+    }
+});
+
+function validateWeight(input) {
+    // Ganti koma -> titik
+    input.value = input.value.replace(",", ".");
+
+    // Hapus SEMUA huruf
+    input.value = input.value.replace(/[A-Za-z]/g, "");
+
+    // Hapus karakter aneh kecuali angka dan titik
+    input.value = input.value.replace(/[^0-9.]/g, "");
+
+    // Tidak boleh ada lebih dari 1 titik
+    const parts = input.value.split(".");
+    if (parts.length > 2) {
+        input.value = parts[0] + "." + parts[1];
+    }
+
+    // Tidak boleh minus
+    if (input.value.startsWith("-")) {
+        input.value = input.value.substring(1);
+    }
+
+    // Tidak boleh > 1
+    if (parseFloat(input.value) > 1) {
+        input.value = "1";
+    }
+
+    // Batasi max 3 desimal
+    if (parts[1] && parts[1].length > 3) {
+        parts[1] = parts[1].substring(0,3);
+        input.value = parts[0] + "." + parts[1];
+    }
+
+    // Trigger update total bobot
+    updateWeights();
+}
+
+
+// Auto Update Total & Sisa Bobot
+function updateWeights() {
+    const jt = parseFloat(document.querySelector("input[name='w_jt']").value) || 0;
+    const usia = parseFloat(document.querySelector("input[name='w_usia']").value) || 0;
+    const pekerjaan = parseFloat(document.querySelector("input[name='w_pekerjaan']").value) || 0;
+    const status = parseFloat(document.querySelector("input[name='w_status']").value) || 0;
+
+    const total = jt + usia + pekerjaan + status;
+    const sisa = 1 - total;
+
+    document.getElementById("total_bobot").innerText = total.toFixed(3);
+    document.getElementById("sisa_bobot").innerText = sisa.toFixed(3);
+
+    // Enable/disable button based on total weight
+    const btn = document.getElementById("btn_hitung");
+    if (btn) {
+        if (Math.abs(total - 1.0) < 0.001) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+}
+
+document.querySelectorAll("input[name='w_jt'], input[name='w_usia'], input[name='w_pekerjaan'], input[name='w_status']")
+    .forEach(el => {
+
+        // Blok input huruf, minus, dll
+        el.addEventListener("input", function () {
+
+            // Hapus karakter selain angka dan titik
+            this.value = this.value.replace(/[^0-9.]/g, "");
+
+            // Batasi hanya 1 titik
+            const parts = this.value.split(".");
+            if (parts.length > 2) {
+                this.value = parts[0] + "." + parts[1];
+            }
+
+            // Jika > 1, paksa jadi 1.000
+            if (parseFloat(this.value) > 1) {
+                this.value = "1.000";
+            }
+
+            // Update total & sisa bobot
+            updateWeights();
+        });
+
+        // Blok minus dari keyboard
+        el.addEventListener("keydown", function(e){
+            if (e.key === "-" || e.key === "e" || e.key === "E") {
+                e.preventDefault();
+            }
+        });
+    });
+
+
+    document.addEventListener("keydown", function(e){
+
+// Hanya berlaku pada input bobot, bukan tombol
+const bobotOrder = ["w_jt", "w_usia", "w_pekerjaan", "w_status"];
+
+const active = document.activeElement;
+
+if (e.key === "Enter" && active.tagName.toLowerCase() === "input") {
+
+    const name = active.getAttribute("name");
+
+    // Jika bukan input bobot → jangan blok
+    if (!bobotOrder.includes(name)) return;
+
+    e.preventDefault(); // Cegah submit
+
+    // Cari index input sekarang
+    let nextIndex = bobotOrder.indexOf(name) + 1;
+
+    // Jika kolom terakhir → pindah fokus ke tombol submit
+    if (nextIndex >= bobotOrder.length) {
+        const btn = document.querySelector("#btn_hitung");
+        if (btn) btn.focus();
+        return;
+    }
+
+    // Kalau masih ada kolom berikutnya → fokus ke input berikut
+    const nextInput = document.querySelector(`input[name='${bobotOrder[nextIndex]}']`);
+    if (nextInput) nextInput.focus();
+}
+});
+
+    setTimeout(() => {
+        const alertBox = document.getElementById("alertBox");
+        if (alertBox) {
+            alertBox.style.transition = "opacity 0.5s ease";
+            alertBox.style.opacity = "0";
+            setTimeout(() => alertBox.remove(), 500);
+        }
+    }, 3000); // 5 detik
+
+</script>
+
+    </div>
+</body>
+</html>
