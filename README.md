@@ -25,9 +25,8 @@ Website ini adalah sistem pendukung keputusan (SPK) untuk memberikan **peringkat
 ## 4. Installation & Setup (Instalasi)  
 1. Clone repository:  
    ```bash
-   git clone https://github.com/Adhe110/Decision_Support_System_Bansos.git
-   cd Decision_Support_System_Bansos
-
+   git clone https://github.com/Adhe110/Sistem-SPK-V3.git
+   cd Sistem-SPK-V3
 
 2. Install Semua Dependency
    ```bash
