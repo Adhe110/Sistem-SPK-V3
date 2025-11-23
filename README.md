@@ -4,6 +4,7 @@
 Website ini adalah sistem pendukung keputusan (SPK) untuk memberikan **peringkat penerima bantuan sosial (bansos)** menggunakan metode **SAW (Simple Additive Weighting)** dan **TOPSIS (Technique for Order of Preference by Similarity to Ideal Solution)**.
 
 ## 2. Features (Fitur)  
+- Download template Excel untuk data input.
 - Upload file Excel data calon penerima bantuan.  
 - Auto-mapping kolom berdasarkan nama yang mirip (mis. “usia”, “umur” → “Usia”).  
 - Validasi data:  
@@ -14,7 +15,7 @@ Website ini adalah sistem pendukung keputusan (SPK) untuk memberikan **peringkat
   - **TOPSIS** → hitung jarak ideal positif/negatif → nilai ranking  
 - Export hasil ranking ke file Excel.  
 - Fitur filter hasil berdasarkan RW, RT, atau Dusun.  
-- Download template Excel untuk data input.
+
 
 ## 3. Technology Stack (Tumpukan Teknologi)  
 - Backend: Flask (Python)  
